@@ -1,20 +1,24 @@
-let sumarUno = number => {
-    return new Promise((res, rej) => {
 
-        console.log(number);
+function sumarUno (numero, callback) {
+    console.log(numero);
 
-        if (number > 7) {
-            rej("El número es muy alto");
-        }
+    if (numero > 7) {
+        throw `${numero} es un numero muy grande`;
+    }
 
-        setTimeout(() => {
-            res(number + 1);
-        }, 800);
+    setTimeout(function() {
+        callback(numero + 1);
+    }, 800);
+}
+
+try {
+    sumarUno(8, function(nuevoNumero) {
+        sumarUno(nuevoNumero, function(nuevoNumero) {
+            sumarUno(nuevoNumero, function(nuevoNumero) {
+                console.log(nuevoNumero);
+            });
+        });
     });
-};
-
-sumarUno(5)
-    .then(nuevoNumero => sumarUno(nuevoNumero))
-    .then(nuevoNumero => sumarUno(nuevoNumero))
-    .then(nuevoNumero => sumarUno(nuevoNumero))
-    .catch(error => { console.log(error); });
+} catch (e) {
+    console.log(e);
+}
