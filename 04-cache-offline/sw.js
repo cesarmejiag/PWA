@@ -28,10 +28,12 @@ const clearCache = (cacheName, total = 5) => {
         .then(cache => {
             return cache.keys()
                 .then(keys => {
-                    console.log("%s > %s", keys.length, total);
                     if (keys.length > total) {
                         cache.delete(keys[0])
-                            .then(clearCache(cacheName));
+                            .then(res => {
+                                console.log('Element deleted');
+                                clearCache(cacheName);
+                            });
                     }
                 });
         });
@@ -60,10 +62,30 @@ self.addEventListener('install', event => {
 // Handle fetch event of service worker.
 self.addEventListener('fetch', event => { 
     
+    // 3. Network with cache fallback
+    const responseNetwork = fetch(event.request)
+        .then(res => {
+            if (!res) {
+                return caches.match(event.request);
+            }
+
+            caches.open(CACHE_DYNAMIC_NAME)
+                .then(cache => {
+                    cache.put(event.request, res);
+                    clearCache(CACHE_DYNAMIC_NAME);
+                });
+
+            return res.clone();
+        })
+        .catch(err => {
+            return caches.match(event.request);
+        });
+
+    event.respondWith(responseNetwork);
 
 
     // 2. Cache with fallback
-    const resources = caches.match(event.request)
+    /* const resources = caches.match(event.request)
         .then(res => {
             
             if (res) {
@@ -74,15 +96,17 @@ self.addEventListener('fetch', event => {
                 .then(res => {
                     caches.open(CACHE_DYNAMIC_NAME)
                         .then(cache => {
-                            cache.put(event.request, res);
-                            clearCache(CACHE_DYNAMIC_NAME);
+                            cache.put(event.request, res)
+                                .then(res => {
+                                    clearCache(CACHE_DYNAMIC_NAME);
+                                });
                         });
 
                     return res.clone();
                 });
         });
 
-    event.respondWith( resources );
+    event.respondWith( resources ); */
 
 
     // 1. Cache only
