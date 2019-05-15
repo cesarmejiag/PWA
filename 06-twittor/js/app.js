@@ -1,4 +1,11 @@
 
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+        .then(res => {
+            console.log("Service Worker registered!");
+        });
+}
+
 // Referencias de jQuery
 
 var titulo      = $('#titulo');
