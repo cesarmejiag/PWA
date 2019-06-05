@@ -1,6 +1,14 @@
 
 if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register('/sw.js')
+
+    const url = location.href;
+    let swLocation = '/PWA/sw.js';
+
+    if (url.includes('localhost')) {
+        swLocation = '/sw.js';
+    }
+
+    navigator.serviceWorker.register(swLocation)
         .then(res => {
             console.log("Service Worker registered!");
         });
