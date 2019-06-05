@@ -1,2 +1,4 @@
-# PWA
-Repository with purpose to learn how PWA works.
+Heroes Chat
+==============
+
+This is a chate template that use jQuery to PWAs
