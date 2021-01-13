@@ -1,12 +1,12 @@
 
 importScripts('js/sw-utils.js');
 
-const STATIC_CACHE = 'static-v2';
-const DYNAMIC_CACHE = 'dynamic-v1';
+const STATIC_CACHE = 'static-v4';
 const INMUTABLE_CACHE = 'inmutable-v1';
+const DYNAMIC_CACHE = 'dynamic-v2';
 
-const APP_SHELL = [
-    // '/',
+const STATIC_CACHE_FILES = [
+    '/',
     'index.html',
     'css/style.css',
     'img/favicon.ico',
@@ -19,8 +19,7 @@ const APP_SHELL = [
     'js/sw-utils.js'
 ];
 
-
-const APP_SHELL_INMUTABLE = [
+const INMUTABLE_CACHE_FILES = [
     'https://fonts.googleapis.com/css?family=Quicksand:300,400',
     'https://fonts.googleapis.com/css?family=Lato:400,300',
     'https://use.fontawesome.com/releases/v5.3.1/css/all.css',
@@ -28,53 +27,43 @@ const APP_SHELL_INMUTABLE = [
     'js/libs/jquery.js'
 ];
 
+
 // Handle 'install' event.
 self.addEventListener('install', e => {
+    const staticCache = caches.open(STATIC_CACHE)
+        .then(cache => cache.addAll(STATIC_CACHE_FILES));
 
-    const openStaticCache = caches.open(STATIC_CACHE)
-        .then(cache => cache.addAll(APP_SHELL));
+    const inmutableCache = caches.open(INMUTABLE_CACHE)
+        .then(cache => cache.addAll(INMUTABLE_CACHE_FILES));
 
-    const openInmutableCache = caches.open(INMUTABLE_CACHE)
-        .then(cache => cache.addAll(APP_SHELL_INMUTABLE));
-
-    e.waitUntil(Promise.all([openStaticCache, openInmutableCache]));
-
+    e.waitUntil(Promise.all([staticCache, inmutableCache]));
 });
-
-
-// Handle 'fetch' event.
-self.addEventListener('fetch', e => {
-
-    const handleFetch = caches.match(e.request)
-        .then(res => {
-            if (res) {
-                return res;
-            } else {
-                return fetch(e.request)
-                    .then(res => {
-                        updateDynamicCache(DYNAMIC_CACHE, e.request, res);
-                    });
-            }
-        });
-
-    e.respondWith(handleFetch);
-
-});
-
 
 // Handle 'activate' event.
 self.addEventListener('activate', e => {
+    e.waitUntil((async () => {
+        const keys = await caches.keys();
 
-    // Remove old static cache.
-    const removeOldStaticCache = caches.keys()
-        .then(keys => {
-            keys.forEach(key => {
-                if (key !== STATIC_CACHE && key.includes('static')) {
-                    return caches.delete(key);
-                }
-            });
+        keys.forEach(async key => {
+            if (key !== STATIC_CACHE && key !== DYNAMIC_CACHE) {
+                await caches.delete(key);
+            }
         });
+    })());
+});
 
-    e.waitUntil(removeOldStaticCache);
+// Handle 'fetch' event.
+self.addEventListener('fetch', e => {
+    e.respondWith((async ({ request }) => {
+        const cacheRes = await caches.match(request);
 
+        if (cacheRes) {
+            return cacheRes;
+        }
+
+        const fetchRes = await fetch(request);
+
+        await updateDynamicCache(DYNAMIC_CACHE, request, fetchRes);
+        return fetchRes;
+    })(e));
 });

@@ -5,8 +5,7 @@
  * @param {Request} req 
  * @param {Response} res 
  */
-function updateDynamicCache(cacheName, req, res) {
-
+async function updateDynamicCache(cacheName, req, res) {
     if (res.ok) {
         return caches.open(cacheName)
             .then(cache => {
@@ -14,8 +13,7 @@ function updateDynamicCache(cacheName, req, res) {
 
                 return res.clone();
             });
-    } else {
-        return res;
     }
 
+    return res;
 }
